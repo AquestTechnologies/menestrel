@@ -1,0 +1,28 @@
+{
+  "name": "menestrel",
+  "version": "0.1.0",
+  "description": "Tell stories like it's 1490",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AquestTechnologies/menestrel.git"
+  },
+  "keywords": [
+    "storytelling",
+    "onboarding",
+    "story"
+  ],
+  "author": "Aquest Technologies",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AquestTechnologies/menestrel/issues"
+  },
+  "homepage": "https://github.com/AquestTechnologies/menestrel#readme",
+  "dependencies": {
+    "eventemitter3": "^1.1.1",
+    "react": "^0.13.3"
+  }
+}
