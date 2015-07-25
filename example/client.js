@@ -1,4 +1,13 @@
-import Menestrel, {textKnight} from '../src';
+import Menestrel, {Knight, TextKnight, React} from '../src';
+
+class Button extends React.Component {
+  handleClick() {
+    this.state.next();
+  }
+  render() {
+    return <button type="button" onClick={this.handleClick.bind(this)}>Click Me!</button>;
+  }
+}
 
 const tales = {
   beginning: {
@@ -8,17 +17,18 @@ const tales = {
       Promise.all([
         arthur.mount(),
         lancelot.mount(),
-      ]).then(() => next('second', 1500));
+      ]).then(() => next('second', 500));
     }
   },
   first: {
     content: (actors, next) => {
       console.log('first');
-      const {perceval, lancelot} = actors;
+      const {perceval, lancelot, chuck} = actors;
       Promise.all([
+        chuck.mounted ? chuck.toogle() : Promise.resolve(),
         perceval.unmount(),
         lancelot.toogle(),
-      ]).then(() => next('second', 1500));
+      ]).then(() => next('second', 500));
     }
     
   },
@@ -29,7 +39,7 @@ const tales = {
       Promise.all([
         galaad.mount(),
         lancelot.toogle(),
-      ]).then(() => next('third', 1500));
+      ]).then(() => next('third', 500));
     }
   },
   third: {
@@ -41,34 +51,49 @@ const tales = {
         lancelot.toogle(),
         galaad.unmount(),
         perceval.mount(),
-      ]).then(() => next('first', 1500));
+      ]).then(() => next('fourth', 500));
+    }
+  },
+  fourth: {
+    content: (actors, next) => {
+      console.log('fourth');
+      const {chuck} = actors;
+      if (chuck.mounted) {
+        chuck.show().then(() => chuck.passNext(next, 'first'));
+      }
+      else chuck.mount().then(() => chuck.passNext(next, 'first'));
     }
   }
 };
 
 const knights = {
-  arthur: new textKnight('arthur', {
+  arthur: new TextKnight('arthur', {
     x: 0,
     y: 0,
   }),
-  lancelot: new textKnight('lancelot', {
+  lancelot: new TextKnight('lancelot', {
     x: 100,
     y: 100,
     onShow: () => console.log('lancelot onShow')
   }),
-  galaad: new textKnight('galaad', {
+  galaad: new TextKnight('galaad', {
     x: 200,
     y: 200,
     onUnmount: () => console.log('galaad onUnmount')
   }),
-  perceval: new textKnight('perceval', {
+  perceval: new TextKnight('perceval', {
     x: 300,
     y: 300,
   }),
-  gauvin: new textKnight('gauvin', {
+  gauvin: new TextKnight('gauvin', {
     x: 1000,
     y: 1000,
   }),
+  chuck: new Knight({
+    sword: <Button />,
+    x: 1920 / 3,
+    y: 1080 / 3,
+  })
 };
 
 console.log('scenes', tales);
@@ -78,3 +103,4 @@ console.log('starting Menestrel...\n');
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
 .start('beginning');
+

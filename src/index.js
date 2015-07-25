@@ -1,5 +1,6 @@
 import React from 'react';
 
+export {React};
 export default class Menestrel {
   
   constructor(tales, knights) {
@@ -11,10 +12,9 @@ export default class Menestrel {
     new Promise(resolve => this.tales[id].content(this.knights, (id, delay) => {
       if (delay) setTimeout(resolve.bind(null, id), delay); 
       else resolve(id);
-    }))
-    .then(nextId => { 
+    })).then(nextId => { 
       if (nextId) {
-        if (nextId) this._sing.call(this, nextId);
+        if (this.tales[nextId]) this._sing.call(this, nextId);
         else throw new Error('Menestrel : in tale ' + id + ', cannot find next tale ' + nextId);
       } 
       else console.log('tale ' + id + ': nothing next');
@@ -33,7 +33,7 @@ export default class Menestrel {
       if (knights.hasOwnProperty(key)) knights[key].setMenestrel(this);
     });
     this.song = React.createElement(Song, {knights});
-    React.render(this.song, mountNode);
+    this.render = React.render(this.song, mountNode);
     return this;
   }
   
@@ -61,7 +61,9 @@ class Song extends React.Component {
                   left: x,
                   opacity: visible ? 1 : 0,
                 }}>
-                {sword}
+                {React.cloneElement(sword, {
+                  ref: id
+                })}
               </span>
             );
           }
@@ -70,34 +72,6 @@ class Song extends React.Component {
     );
   }  
 }
-/* interpoler medias
-
-medias:
-texte // SVG ou DOM -> Dom avec du SVG eventuellement
-forme // SVG ou DOM -> Dom avec du SVG eventuellement
-video // Youtube ou DOM -> Dom avec une video Youtube eventuellement
-son
-composant react
-
-Knight
-() mount, unmount, show, hide, move(x, y, t, method)
- . mounted visible position 
-
-Knights list :
-onMount, 
-onUnmount, 
-onShow, 
-onHide, 
-onMoveStart, 
-onMoveEnd
-
-
-Sequences :
-conteneur : Promise.all sequences
-sequence : Promise that resolving calls next sequence
-
-
-*/
 
 export class Knight {
   
@@ -115,7 +89,7 @@ export class Knight {
     this.onHide      = typeof onHide      === 'function' ? onHide : () => {};
     this.onMoveStart = typeof onMoveStart === 'function' ? onMoveStart : () => {};
     this.onMoveEnd   = typeof onMoveEnd   === 'function' ? onMoveEnd : () => {};
-    this.sword = sword instanceof React.Component ? sword : undefined;
+    this.sword = React.isValidElement(sword) ? sword : undefined;
   }
   
   setMountNode(node) {
@@ -198,13 +172,18 @@ export class Knight {
   setMenestrel(menestrel) {
     this.menestrel = menestrel;
   }
+  
+  passNext(next, id, delay, callback) {
+    // console.log('refs', this.menestrel.render.refs[this.id]);
+    this.menestrel.render.refs[this.id].setState({next: next.bind(null, id, delay)}, callback);
+  }
 }
 
-export class textKnight extends Knight {
+export class TextKnight extends Knight {
   
   constructor(text, pledge) {
     super(pledge);
-    this.sword = React.createElement(textSword, {text});
+    this.sword = React.createElement(TextSword, {text});
   }
   
   setText(text, callback) {
@@ -216,7 +195,7 @@ export class textKnight extends Knight {
   }
 }
 
-class textSword extends React.Component {
+class TextSword extends React.Component {
   
   componentWillMount() {
     const {text} = this.props;
