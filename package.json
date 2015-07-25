@@ -4,7 +4,8 @@
   "description": "Tell stories like it's 1490",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "cd ./example && npm start && cd .."
   },
   "repository": {
     "type": "git",

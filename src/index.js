@@ -174,7 +174,6 @@ export class Knight {
   }
   
   passNext(next, id, delay, callback) {
-    // console.log('refs', this.menestrel.render.refs[this.id]);
     this.menestrel.song.refs[this.id].setState({next: next.bind(null, id, delay)}, callback);
   }
 }

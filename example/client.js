@@ -13,9 +13,9 @@ const randomInteger = (min, max) => Math.floor(Math.random() * (max - min + 1)) 
 
 const tales = {
   beginning: {
-    content: (actors, next) => {
+    content: (knights, next) => {
       console.log('beginning');
-      const {arthur, lancelot} = actors;
+      const {arthur, lancelot} = knights;
       Promise.all([
         arthur.mount(),
         lancelot.mount(),
@@ -23,9 +23,9 @@ const tales = {
     }
   },
   first: {
-    content: (actors, next) => {
+    content: (knights, next) => {
       console.log('first');
-      const {perceval, lancelot, chuck} = actors;
+      const {perceval, lancelot, chuck} = knights;
       Promise.all([
         chuck.mounted ? chuck.toogle() : Promise.resolve(),
         perceval.unmount(),
@@ -35,22 +35,21 @@ const tales = {
     
   },
   second: {
-    content: (actors, next) => {
+    content: (knights, next) => {
       console.log('second');
-      const {lancelot, galaad, arthur} = actors;
+      const {lancelot, galaad, arthur} = knights;
       Promise.all([
         galaad.mount(),
         lancelot.toogle(),
-        arthur
-          .setText(arthur.getText() + '.')
-          .move(randomInteger(0, 1700), randomInteger(0, 1000)),
+        arthur.setText(arthur.getText() + '.')
+          .move(randomInteger(0, 1500), randomInteger(0, 800)),
       ]).then(() => next('third', 1000));
     }
   },
   third: {
-    content: (actors, next) => {
+    content: (knights, next) => {
       console.log('third');
-      const {arthur, galaad, perceval, lancelot} = actors;
+      const {arthur, galaad, perceval, lancelot} = knights;
       Promise.all([
         arthur.toogle(),
         lancelot.toogle(),
@@ -60,14 +59,14 @@ const tales = {
     }
   },
   fourth: {
-    content: (actors, next) => {
+    content: (knights, next) => {
       console.log('fourth');
-      next('first');
-      const {chuck} = actors;
-      // if (chuck.mounted) {
-      //   chuck.show().then(() => chuck.passNext(next, 'first'));
-      // }
-      // else chuck.mount().then(() => chuck.passNext(next, 'first'));
+      const {chuck} = knights;
+      if (chuck.mounted) {
+        chuck.passNext(next, 'first');
+        chuck.show();
+      }
+      else chuck.mount().then(() => chuck.passNext(next, 'first'));
     }
   }
 };
@@ -102,11 +101,10 @@ const knights = {
   })
 };
 
-console.log('scenes', tales);
+console.log('tales', tales);
 console.log('knights', knights);
 console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
 .start('beginning');
-
