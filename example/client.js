@@ -9,6 +9,8 @@ class Button extends React.Component {
   }
 }
 
+const randomInteger = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
 const tales = {
   beginning: {
     content: (actors, next) => {
@@ -17,7 +19,7 @@ const tales = {
       Promise.all([
         arthur.mount(),
         lancelot.mount(),
-      ]).then(() => next('second', 500));
+      ]).then(() => next('second', 1000));
     }
   },
   first: {
@@ -28,18 +30,21 @@ const tales = {
         chuck.mounted ? chuck.toogle() : Promise.resolve(),
         perceval.unmount(),
         lancelot.toogle(),
-      ]).then(() => next('second', 500));
+      ]).then(() => next('second', 1000));
     }
     
   },
   second: {
     content: (actors, next) => {
       console.log('second');
-      const {lancelot, galaad} = actors;
+      const {lancelot, galaad, arthur} = actors;
       Promise.all([
         galaad.mount(),
         lancelot.toogle(),
-      ]).then(() => next('third', 500));
+        arthur
+          .setText(arthur.getText() + '.')
+          .move(randomInteger(0, 1700), randomInteger(0, 1000)),
+      ]).then(() => next('third', 1000));
     }
   },
   third: {
@@ -51,17 +56,18 @@ const tales = {
         lancelot.toogle(),
         galaad.unmount(),
         perceval.mount(),
-      ]).then(() => next('fourth', 500));
+      ]).then(() => next('fourth', 1000));
     }
   },
   fourth: {
     content: (actors, next) => {
       console.log('fourth');
+      next('first');
       const {chuck} = actors;
-      if (chuck.mounted) {
-        chuck.show().then(() => chuck.passNext(next, 'first'));
-      }
-      else chuck.mount().then(() => chuck.passNext(next, 'first'));
+      // if (chuck.mounted) {
+      //   chuck.show().then(() => chuck.passNext(next, 'first'));
+      // }
+      // else chuck.mount().then(() => chuck.passNext(next, 'first'));
     }
   }
 };

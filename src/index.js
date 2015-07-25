@@ -32,13 +32,13 @@ export default class Menestrel {
     Object.keys(knights).forEach(key => {
       if (knights.hasOwnProperty(key)) knights[key].setMenestrel(this);
     });
-    this.song = React.createElement(Song, {knights});
-    this.render = React.render(this.song, mountNode);
+    this.song = React.render(<Song knights={knights} />, mountNode);
     return this;
   }
   
   update(callback) {
-    React.render(this.song, this.mountNode, callback);
+    React.render(<Song knights={this.knights} />, this.mountNode, callback);
+    return this;
   }
 }
 
@@ -158,10 +158,10 @@ export class Knight {
       if (!t) {
         this.x = x;
         this.y = y;
+        this.menestrel.update(resolve);
       } else {
-        
+        resolve();
       }
-      resolve();
     });
     
     promise.then(() => this.onUnmount());
@@ -175,7 +175,7 @@ export class Knight {
   
   passNext(next, id, delay, callback) {
     // console.log('refs', this.menestrel.render.refs[this.id]);
-    this.menestrel.render.refs[this.id].setState({next: next.bind(null, id, delay)}, callback);
+    this.menestrel.song.refs[this.id].setState({next: next.bind(null, id, delay)}, callback);
   }
 }
 
@@ -187,11 +187,12 @@ export class TextKnight extends Knight {
   }
   
   setText(text, callback) {
-    return this.sword.setState({text}, callback);
+    this.menestrel.song.refs[this.id].setState({text}, callback);
+    return this;
   }
   
   getText() {
-    return this.sword.state.text;
+    return this.menestrel.song.refs[this.id].state.text;
   }
 }
 
