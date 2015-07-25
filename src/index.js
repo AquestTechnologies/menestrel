@@ -53,12 +53,13 @@ class Song extends React.Component {
         .map(key => knights[key])
         .map(knight => {
           if (knight.mounted) {
-            const {id, sword, x, y} = knight;
+            const {id, sword, x, y, visible} = knight;
             return (
               <span key={id} style={{
                   position: 'fixed',
                   top: y,
                   left: x,
+                  opacity: visible ? 1 : 0,
                 }}>
                 {sword}
               </span>
@@ -107,7 +108,7 @@ export class Knight {
     
     const { x, y, onMount, onUnmount, onShow, onHide, onMoveStart, onMoveEnd, sword } = pledge;
     this.x = !isNaN(parseFloat(x)) && isFinite(x) ? x : 0;
-    this.x = !isNaN(parseFloat(y)) && isFinite(y) ? y : 0;
+    this.y = !isNaN(parseFloat(y)) && isFinite(y) ? y : 0;
     this.onMount     = typeof onMount     === 'function' ? onMount : () => {};
     this.onUnmount   = typeof onUnmount   === 'function' ? onUnmount : () => {};
     this.onShow      = typeof onShow      === 'function' ? onShow : () => {};
@@ -149,6 +150,7 @@ export class Knight {
   show() {
     const promise = new Promise((resolve, reject) => {
       this.visible = true;
+      this.menestrel.update(resolve);
       resolve();
     });
     
@@ -160,6 +162,7 @@ export class Knight {
   hide() {
     const promise = new Promise((resolve, reject) => {
       this.visible = false;
+      this.menestrel.update(resolve);
       resolve();
     });
     
