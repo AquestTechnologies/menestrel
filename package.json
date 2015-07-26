@@ -1,20 +1,20 @@
 {
   "name": "menestrel",
   "version": "0.1.0",
-  "description": "Tell stories like it's 1490",
+  "description": "Tell stories like it's 1390",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "example": "cd ./example && npm start && cd .."
+    "example": "cd ./example && npm start && cd ..",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AquestTechnologies/menestrel.git"
   },
   "keywords": [
-    "storytelling",
     "onboarding",
-    "story"
+    "story",
+    "storytelling"
   ],
   "author": "Aquest Technologies",
   "license": "MIT",
@@ -23,6 +23,14 @@
   },
   "homepage": "https://github.com/AquestTechnologies/menestrel#readme",
   "dependencies": {
-    "react": "^0.13.3"
+    "aguid": "^1.0.3",
+    "immutable": "^3.7.4",
+    "react": "^0.13.3",
+    "react-redux": "^0.2.2",
+    "redux": "1.0.0-rc"
+  },
+  "devDependencies": {
+    "babel": "^5.8.5",
+    "babel-loader": "^5.3.2"
   }
 }
