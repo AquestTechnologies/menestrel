@@ -1,4 +1,4 @@
-import Menestrel, {Knight, TextKnight, React} from '../src';
+import Menestrel, {Knight, TextKnight, ImageKnight, ShapeKnight, React} from '../src';
 
 class Button extends React.Component {
   handleClick() {
@@ -11,10 +11,11 @@ class Button extends React.Component {
 
 const randomInteger = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
+let stepDown = true;
+
 const tales = {
   beginning: {
     content: (knights, next) => {
-      console.log('beginning');
       const {arthur, lancelot} = knights;
       Promise.all([
         arthur.mount(),
@@ -24,7 +25,6 @@ const tales = {
   },
   first: {
     content: (knights, next) => {
-      console.log('first');
       const {perceval, lancelot, chuck} = knights;
       Promise.all([
         chuck.mounted ? chuck.toogle() : Promise.resolve(),
@@ -36,19 +36,17 @@ const tales = {
   },
   second: {
     content: (knights, next) => {
-      console.log('second');
       const {lancelot, galaad, arthur} = knights;
       Promise.all([
         galaad.mount(),
         lancelot.toogle(),
-        arthur.setText(arthur.getText() + '.')
+        arthur.setText(arthur.text + '.')
           .move(randomInteger(0, 1500), randomInteger(0, 800)),
       ]).then(() => next('third', 1000));
     }
   },
   third: {
     content: (knights, next) => {
-      console.log('third');
       const {arthur, galaad, perceval, lancelot} = knights;
       Promise.all([
         arthur.toogle(),
@@ -60,14 +58,63 @@ const tales = {
   },
   fourth: {
     content: (knights, next) => {
-      console.log('fourth');
       const {chuck} = knights;
       if (chuck.mounted) {
-        chuck.passNext(next, 'first');
-        chuck.show();
+        chuck.passNext(next, 'fifth')
+          .show();
       }
-      else chuck.mount().then(() => chuck.passNext(next, 'first'));
+      else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
     }
+  },
+  
+  // direct reference
+  fifth: 'sixth', 
+  
+  // containers
+  sixth: ['n1', [['n2', 'n3'], 'seventh']], // same as ['n1', 'n2', 'n3', 'sixth']
+
+  // containers as next
+  seventh: { 
+    content: (knights, next) => next(['n2', 'eigth'], 100)
+  },
+  
+  // onStart
+  eigth: { 
+    onStart: ['ninth', 'n4'],
+    content: (knights, next) => next(),
+  },
+  
+  // onEnd
+  ninth: { 
+    onEnd:   ['first'],
+    content: (knights, next) => next(null, 200),
+  },
+  
+  // shorthand
+  n1: (knights, next) => next(),
+  n2: (knights, next) => next(),
+  n3: (knights, next) => next(),
+  n4: (knights, next) => next(),
+  
+  blink: (knights, next) => {
+    const {bruce} = knights;
+    bruce.mounted ?
+      bruce.toogle().then(() => next('blink', 5000)) :
+      bruce.mount().then(() => next('blink', 5000));
+  },
+  
+  step: (knights, next) => {
+    const {lee} = knights;
+    if (lee.mounted) {
+      if (stepDown) {
+        if (lee.y > 880) stepDown = false;
+        lee.displace(0, 10).then(() => next('step', 1000));
+      } else {
+        if (lee.y < 20) stepDown = true;
+        lee.displace(0, -10).then(() => next('step', 1000));
+      }
+    }
+    else lee.mount().then(() => next('step', 1000));
   }
 };
 
@@ -86,19 +133,32 @@ const knights = {
     y: 200,
     onUnmount: () => console.log('galaad onUnmount')
   }),
-  perceval: new TextKnight('perceval', {
-    x: 300,
+  perceval: new ImageKnight('https://matricien.files.wordpress.com/2012/04/perceval-sur-sa-monture.jpg', {
+    x: 200,
     y: 300,
-  }),
-  gauvin: new TextKnight('gauvin', {
-    x: 1000,
-    y: 1000,
+    width: 200,
   }),
   chuck: new Knight({
     sword: <Button />,
-    x: 1920 / 3,
-    y: 1080 / 3,
-  })
+    x: 200,
+    y: 280,
+  }),
+  bruce: new ShapeKnight('rectangle', {
+    x: 700,
+    y: 100,
+    width: 100,
+    height: 100,
+    color: '#113F59',
+  }),
+  lee: new ShapeKnight('rectangle', {
+    x: 810,
+    y: 100,
+    width: 100,
+    height: 100,
+    color: '#113F59',
+    easing: 'linear',
+    transitionTime: 1
+  }),
 };
 
 console.log('tales', tales);
@@ -107,4 +167,4 @@ console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
-.start('beginning');
+.start(['blink', 'step', 'beginning']);
