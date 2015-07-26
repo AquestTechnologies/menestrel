@@ -1,4 +1,4 @@
-import Menestrel, {passNext, mount, unmount, show, hide, toogle, Knight, TextKnight, ImageKnight, ShapeKnight, React} from '../src';
+import Menestrel, {Knight, TextKnight, ImageKnight, ShapeKnight, React} from '../src';
 
 class Button extends React.Component {
   handleClick() {
@@ -17,54 +17,53 @@ const tales = {
   beginning: {
     content: (knights, next) => {
       const {arthur, lancelot} = knights;
-      // console.log(arthur.menestrel);
-      mount(arthur);
-      mount(lancelot);
-      next('second', 1000);
+      Promise.all([
+        arthur.mount(),
+        lancelot.mount(),
+      ]).then(() => next('second', 1000));
     }
   },
   first: {
     content: (knights, next) => {
       const {perceval, lancelot, chuck} = knights;
-        
-        if (chuck.mounted) toogle(chuck);
-        unmount(perceval);
-        toogle(lancelot);
-        next('second', 1000);
+      Promise.all([
+        chuck.mounted ? chuck.toogle() : Promise.resolve(),
+        perceval.unmount(),
+        lancelot.toogle(),
+      ]).then(() => next('second', 1000));
     }
     
   },
   second: {
     content: (knights, next) => {
       const {lancelot, galaad, arthur} = knights;
-      mount(galaad);
-      toogle(lancelot);
-        // arthur.setText(arthur.text + '.')
-          // .move(randomInteger(0, 1500), randomInteger(0, 800)),
-      next('third', 1000);
+      Promise.all([
+        galaad.mount(),
+        lancelot.toogle(),
+        arthur.setText(arthur.text + '.')
+          .move(randomInteger(0, 1500), randomInteger(0, 800)),
+      ]).then(() => next('third', 1000));
     }
   },
   third: {
     content: (knights, next) => {
       const {arthur, galaad, perceval, lancelot} = knights;
-      toogle(arthur),
-      toogle(lancelot),
-      unmount(galaad),
-      mount(perceval),
-      next('fourth', 1000);
+      Promise.all([
+        arthur.toogle(),
+        lancelot.toogle(),
+        galaad.unmount(),
+        perceval.mount(),
+      ]).then(() => next('fourth', 1000));
     }
   },
   fourth: {
     content: (knights, next) => {
       const {chuck} = knights;
       if (chuck.mounted) {
-        show(chuck);
-        chuck.passNext(next, 'fifth');
+        chuck.passNext(next, 'fifth')
+          .show();
       }
-      else {
-        mount(chuck);
-        passNext(chuck, next, 'fifth');
-      }
+      else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
     }
   },
   
@@ -140,7 +139,7 @@ const knights = {
     width: 200,
   }),
   chuck: new Knight({
-    Sword: Button,
+    sword: <Button />,
     x: 200,
     y: 280,
   }),
@@ -162,9 +161,10 @@ const knights = {
   }),
 };
 
+console.log('tales', tales);
+console.log('knights', knights);
 console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
-.start('beginning');
-// .start(['blink', 'step', 'beginning']);
+.start(['blink', 'step', 'beginning']);
