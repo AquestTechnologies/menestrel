@@ -58,7 +58,7 @@ const knights = {
   }),
 };
 
-const pace = 100;
+const pace = 1000;
 const tales = {
   
   beginning: (knights, next) => {
@@ -147,13 +147,13 @@ const tales = {
     if (lee.mounted) {
       if (stepDown) {
         if (lee.y > 880) stepDown = false;
-        lee.displace(0, 10).then(() => next('step', 100));
+        lee.displace(0, 10).then(() => next('step', 800));
       } else {
         if (lee.y < 20) stepDown = true;
-        lee.displace(0, -10).then(() => next('step', 100));
+        lee.displace(0, -10).then(() => next('step', 800));
       }
     }
-    else lee.mount().then(() => next('step', 10));
+    else lee.mount().then(() => next('step'));
   }
 };
 
@@ -161,6 +161,6 @@ console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
-.start('beginning');
+// .start('beginning');
 // .start(['blink', 'beginning']);
-// .start(['blink', 'step', 'beginning']);
+.start(['blink', 'step', 'beginning']);

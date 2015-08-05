@@ -113,7 +113,7 @@ export class Knight {
     this.onHide      = filterFn(onHide);
     this.onMoveStart = filterFn(onMoveStart);
     this.onMoveEnd   = filterFn(onMoveEnd);
-    this.Sword = Sword; // need verification
+    this.Sword = Sword;
     this.props = typeof props === 'object' ? props : {};
   }
   
@@ -122,13 +122,17 @@ export class Knight {
     this.id = name;
   }
   
+  _update(callback) {
+    this.menestrel.song.forceUpdate(callback);
+  }
+  
   mount(x, y) {
     const promise = new Promise((resolve, reject) => {
       this.mounted = true;
       this.visible = true;
       this.x = isNumber(x) ? x : this.x;
       this.y = isNumber(y) ? y : this.y;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
     promise.then(() => this.onMount());
     
@@ -139,7 +143,7 @@ export class Knight {
     const promise = new Promise((resolve, reject) => {
       this.mounted = false;
       this.visible = false;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
     promise.then(() => this.onUnmount());
     
@@ -149,7 +153,7 @@ export class Knight {
   show() {
     const promise = new Promise((resolve, reject) => {
       this.visible = true;
-      this.menestrel.update(resolve);
+      this._update(resolve);
       resolve();
     });
     promise.then(() => this.onShow());
@@ -160,7 +164,7 @@ export class Knight {
   hide() {
     const promise = new Promise((resolve, reject) => {
       this.visible = false;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
     promise.then(() => this.onHide());
     
@@ -171,20 +175,19 @@ export class Knight {
     return this.visible ? this.hide() : this.show();
   }
   
-  // displace(dx, dy, transitionTime, easing) {
-  //   if (!dx && !dy) throwError('Knight.displace: missing dx and dy args');
-  //   this.onMoveStart();
+  displace(dx, dy) {
+    if (!dx && !dy) throwError('Knight.displace: missing dx and dy args');
+    this.onMoveStart();
     
-  //   const promise = new Promise((resolve, reject) => {
-      
-  //     this.x = this.x + dx;
-  //     this.y = this.y + dy;
-  //     this.menestrel.update(resolve);
-  //   });
-  //   promise.then(() => this.onUnmount());
+    const promise = new Promise((resolve, reject) => {
+      this.x = this.x + dx;
+      this.y = this.y + dy;
+      this._update(resolve);
+    });
+    promise.then(() => this.onUnmount());
     
-  //   return promise;
-  // }
+    return promise;
+  }
   
   move(x, y) {
     if (!x && !y) throwError('Knight.move: missing x and y args');
@@ -193,7 +196,7 @@ export class Knight {
     const promise = new Promise((resolve, reject) => {
       this.x = x;
       this.y = y;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
     promise.then(() => this.onMoveEnd());
     
@@ -203,14 +206,14 @@ export class Knight {
   replaceProps(newProps) {
     return new Promise(resolve => {
       this.props = newProps;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
   
   setProps(newProps) {
     return new Promise(resolve => {
       this.props = simpleAdd(this.props, newProps);
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
   
@@ -228,14 +231,16 @@ export class TextKnight extends Knight {
     checkType(text, 'string', 'TextKnight.constructor', 'pledge.text');
     this.Sword = TextSword;
     this.props.text = text;
+    this.text = text;
   }
   
   setText(text) {
     checkType(text, 'string', 'TextKnight.setText', 'text');
     
     return new Promise(resolve => {
+      this.text = text;
       this.props.text = text;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
 }
@@ -247,11 +252,14 @@ export class ImageKnight extends Knight {
     
     const {width, height, path} = pledge;
     checkType(path, 'string', 'ImageKnight.constructor', 'pledge.path');
+    this.path = path;
+    this.width = isNumber(width) ? width : undefined;
+    this.height = isNumber(height) ? height : undefined;
     this.Sword = ImageSword;
     this.props = {
       path, 
-      width: isNumber(width) ? width : undefined, 
-      height: isNumber(height) ? height : undefined,
+      width: this.width, 
+      height: this.height,
     };
   }
   
@@ -259,8 +267,9 @@ export class ImageKnight extends Knight {
     checkType(path, 'string', 'ImageKnight.setPath', 'path');
     
     return new Promise(resolve => {
+      this.path = path;
       this.props.path = path;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
   
@@ -268,8 +277,9 @@ export class ImageKnight extends Knight {
     checkType(width, 'number', 'ImageKnight.setWidth', 'width');
     
     return new Promise(resolve => {
+      this.width = width;
       this.props.width = width;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
   
@@ -277,8 +287,9 @@ export class ImageKnight extends Knight {
     checkType(height, 'number', 'ImageKnight.setHeight', 'height');
     
     return new Promise(resolve => {
+      this.height = height;
       this.props.height = height;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
   
@@ -287,9 +298,11 @@ export class ImageKnight extends Knight {
     checkType(height, 'number', 'ImageKnight.setSize', 'height');
     
     return new Promise(resolve => {
+      this.width = width;
+      this.height = height;
       this.props.width = width;
       this.props.height = height;
-      this.menestrel.update(resolve);
+      this._update(resolve);
     });
   }
 }
@@ -300,34 +313,58 @@ export class ShapeKnight extends Knight {
     super(pledge);
     
     const {shape, width, height, color} = pledge;
+    checkType(shape, 'string', 'ShapeKnight.constructor', 'shape');
+    
     this.shape = shape;
-    this.color = color;
-    this.width = width;
-    this.height = height;
-    this.Sword = React.createElement(ShapeSword, {shape, width, height, color});
+    this.color = typeof color === 'string' && color.charAt(0) === '#' && (color.length === 4 || color.length === 7) ? color : '#000';
+    this.width = isNumber(width) ? width : undefined;
+    this.height = isNumber(height) ? height : undefined;
+    this.Sword = ShapeSword;
+    this.props = {
+      shape,
+      color: this.color,
+      width: this.width,
+      height: this.height,
+    };
   }
   
-  setShape(shape, callback) {
-    this.shape = shape;
-    this.setSwordState({shape}, callback);
-    return this;
+  setShape(shape) {
+    checkType(shape, 'string', 'ShapeKnight.setShape', 'shape');
+    
+    return new Promise(resolve => {
+      this.shape = shape;
+      this.props.shape = shape;
+      this._update(resolve);
+    });
   }
   
-  setWidth(width, callback) {
-    this.width = width;
-    this.setSwordState({width}, callback);
-    return this;
+  setWidth(width) {
+    checkType(width, 'number', 'ShapeKnight.setWidth', 'width');
+    
+    return new Promise(resolve => {
+      this.width = width;
+      this.props.width = width;
+      this._update(resolve);
+    });
   }
   
-  setHeight(height, callback) {
-    this.height = height;
-    this.setSwordState({height}, callback);
-    return this;
+  setHeight(height) {
+    checkType(height, 'number', 'ShapeKnight.setHeight', 'height');
+    
+    return new Promise(resolve => {
+      this.height = height;
+      this.props.height = height;
+      this._update(resolve);
+    });
   }
   
-  setColor(color, callback) {
-    this.color = color;
-    this.setSwordState({color}, callback);
-    return this;
+  setColor(color) {
+    checkType(color, 'number', 'ShapeKnight.setColor', 'color');
+    
+    return new Promise(resolve => {
+      this.color = color;
+      this.props.color = color;
+      this._update(resolve);
+    });
   }
 }
