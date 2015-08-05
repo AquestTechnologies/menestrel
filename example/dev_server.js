@@ -2,18 +2,18 @@ import webpack          from 'webpack';
 import webpackDevServer from 'webpack-dev-server';
 import config           from './webpack.config.js';
 
-export default function(){
+export default function() {
   let startTime;
   const host = '0.0.0.0';
   const port = 3000;
   
   const bundle = webpack(config);
-  bundle.plugin('compile', function() {
+  bundle.plugin('compile', () => {
     startTime = Date.now();
     console.log('Bundling...');
   });
   
-  bundle.plugin('done', function() {
+  bundle.plugin('done', () => {
     console.log('Bundled in ' + (Date.now() - startTime) + 'ms!');
   });
   
@@ -30,11 +30,8 @@ export default function(){
       hot: true,
       inline: true
     }
-  }).listen(port, host, function (err) {
-    if (err) {
-      console.log(err);
-      return;
-    }
+  }).listen(port, host, err => {
+    if (err) return console.log(err);
     console.log('WDS listening at ' + host + ':' + port);
   });
 }

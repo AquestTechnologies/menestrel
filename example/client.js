@@ -2,7 +2,7 @@ import Menestrel, {Knight, TextKnight, ImageKnight, ShapeKnight, React} from '..
 
 class Button extends React.Component {
   handleClick() {
-    this.state.next();
+    this.props.next();
   }
   render() {
     return <button type="button" onClick={this.handleClick.bind(this)}>Click Me!</button>;
@@ -37,7 +37,7 @@ const knights = {
     width: 200,
   }),
   chuck: new Knight({
-    sword: <Button />,
+    Sword: Button,
     x: 200,
     y: 280,
   }),
@@ -58,6 +58,7 @@ const knights = {
   }),
 };
 
+const pace = 100;
 const tales = {
   
   beginning: (knights, next) => {
@@ -65,7 +66,7 @@ const tales = {
     Promise.all([
       arthur.mount(),
       lancelot.mount(),
-    ]).then(() => next('second', 1000));
+    ]).then(() => next('second', pace));
   },
   
   first: (knights, next) => {
@@ -74,7 +75,7 @@ const tales = {
       chuck.mounted ? chuck.toogle() : Promise.resolve(),
       perceval.unmount(),
       lancelot.toogle(),
-    ]).then(() => next('second', 1000));
+    ]).then(() => next('second', pace));
   },
   
   second: (knights, next) => {
@@ -84,7 +85,7 @@ const tales = {
       lancelot.toogle(),
       arthur.setText(arthur.text + '.'),
       arthur.move(randomInteger(0, 1000), randomInteger(0, 500)),
-    ]).then(() => next('third', 1000));
+    ]).then(() => next('third', pace));
   },
   
   third: (knights, next) => {
@@ -94,14 +95,13 @@ const tales = {
       lancelot.toogle(),
       galaad.unmount(),
       perceval.mount(),
-    ]).then(() => next('fourth', 1000));
+    ]).then(() => next('fourth', pace));
   },
   fourth: (knights, next) => {
     const {chuck} = knights;
     if (chuck.mounted) {
-      chuck
-        .passNext(next, 'fifth')
-        .show();
+      chuck.passNext(next, 'fifth');
+      chuck.show();
     }
     else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
   },
@@ -161,4 +161,6 @@ console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
-.start(['blink', /*'step', */'beginning']);
+.start('beginning');
+// .start(['blink', 'beginning']);
+// .start(['blink', 'step', 'beginning']);

@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 export {React};
 
 import Song from './components/Song';
@@ -18,6 +19,23 @@ function checkType(arg, correctType, caller, argName) {
   if (type !== correctType) throwError(`${caller}: expected ${argName} argument to be a ${correctType}, but got ${type} instead`);
 }
 
+function simpleMerge(a, b) { // Mutation ok?
+  Object.keys(b).forEach(key => {
+    if (b.hasOwnProperty(key)) a[key] = b[key];
+  });
+  return a;
+}
+
+function simpleAdd(a, b) {
+  const c = {};
+  Object.keys(a).forEach(key => {
+    if (a.hasOwnProperty(key)) c[key] = a[key];
+  });
+  Object.keys(b).forEach(key => {
+    if (b.hasOwnProperty(key)) c[key] = b[key];
+  });
+  return c;
+}
 
 export default class Menestrel {
   
@@ -68,11 +86,12 @@ export default class Menestrel {
     Object.keys(knights).forEach(key => {
       if (knights.hasOwnProperty(key)) knights[key]._initialize(this, key);
     });
-    this.song = React.render(<Song knights={knights} />, mountNode, filteredCallback);
+    this.song = ReactDOM.render(<Song knights={knights} />, mountNode, filteredCallback);
     return this;
   }
   
   update(callback) {
+    console.log('Menestrel update');
     this.song.setState({knights: this.knights}, callback);
     return this;
   }
@@ -81,7 +100,7 @@ export default class Menestrel {
 export class Knight {
   
   constructor(pledge) {
-    const {x, y, onMount, onUnmount, onShow, onHide, onMoveStart, onMoveEnd, sword} = pledge;
+    const {x, y, onMount, onUnmount, onShow, onHide, onMoveStart, onMoveEnd, Sword, props} = pledge;
     
     this.pledge = pledge; // could be usefull
     this.mounted = false;
@@ -94,7 +113,8 @@ export class Knight {
     this.onHide      = filterFn(onHide);
     this.onMoveStart = filterFn(onMoveStart);
     this.onMoveEnd   = filterFn(onMoveEnd);
-    this.sword = React.isValidElement(sword) ? sword : undefined;
+    this.Sword = Sword; // need verification
+    this.props = typeof props === 'object' ? props : {};
   }
   
   _initialize(menestrel, name) {
@@ -151,46 +171,51 @@ export class Knight {
     return this.visible ? this.hide() : this.show();
   }
   
-  displace(dx, dy, transitionTime, easing) {
-    if (!dx && !dy) throwError('Knight.displace: missing dx and dy args');
-    this.onMoveStart();
+  // displace(dx, dy, transitionTime, easing) {
+  //   if (!dx && !dy) throwError('Knight.displace: missing dx and dy args');
+  //   this.onMoveStart();
     
-    const promise = new Promise((resolve, reject) => {
+  //   const promise = new Promise((resolve, reject) => {
       
-      this.x = this.x + dx;
-      this.y = this.y + dy;
-      this.menestrel.update(resolve);
-    });
-    promise.then(() => this.onUnmount());
+  //     this.x = this.x + dx;
+  //     this.y = this.y + dy;
+  //     this.menestrel.update(resolve);
+  //   });
+  //   promise.then(() => this.onUnmount());
     
-    return promise;
-  }
+  //   return promise;
+  // }
   
-  move(x, y, transitionTime, easing) {
+  move(x, y) {
     if (!x && !y) throwError('Knight.move: missing x and y args');
     this.onMoveStart();
     
     const promise = new Promise((resolve, reject) => {
-      
       this.x = x;
       this.y = y;
       this.menestrel.update(resolve);
     });
-    promise.then(() => this.onUnmount());
+    promise.then(() => this.onMoveEnd());
     
     return promise;
   }
   
-  setSwordState(newState, callback) {
-    const sword = this.menestrel.song.refs[this.id]; // Magic !
-    if (!sword) throwError(`Knight.setSwordState: knight ${this.id} must be mounted`);
-    sword.setState(newState, callback);
-    return this;
+  replaceProps(newProps) {
+    return new Promise(resolve => {
+      this.props = newProps;
+      this.menestrel.update(resolve);
+    });
   }
   
-  passNext(next, id, delay, callback) {
-    this.setSwordState({next: next.bind(null, id, delay)}, callback);
-    return this;
+  setProps(newProps) {
+    return new Promise(resolve => {
+      this.props = simpleAdd(this.props, newProps);
+      this.menestrel.update(resolve);
+    });
+  }
+  
+  passNext(next, id, delay) {
+    return this.setProps({next: next.bind(null, id, delay)});
   }
 }
 
@@ -201,15 +226,17 @@ export class TextKnight extends Knight {
     
     const {text} = pledge;
     checkType(text, 'string', 'TextKnight.constructor', 'pledge.text');
-    this.text = text;
-    this.sword = React.createElement(TextSword, {text});
+    this.Sword = TextSword;
+    this.props.text = text;
   }
   
   setText(text) {
     checkType(text, 'string', 'TextKnight.setText', 'text');
-    this.text = text;
     
-    return new Promise(resolve => this.setSwordState({text}, resolve()));
+    return new Promise(resolve => {
+      this.props.text = text;
+      this.menestrel.update(resolve);
+    });
   }
 }
 
@@ -220,40 +247,50 @@ export class ImageKnight extends Knight {
     
     const {width, height, path} = pledge;
     checkType(path, 'string', 'ImageKnight.constructor', 'pledge.path');
-    this.url = path;
-    this.width = isNumber(width) ? width : undefined;
-    this.height = isNumber(height) ? height : undefined;
-    this.sword = React.createElement(ImageSword, {path, width, height});
+    this.Sword = ImageSword;
+    this.props = {
+      path, 
+      width: isNumber(width) ? width : undefined, 
+      height: isNumber(height) ? height : undefined,
+    };
   }
   
   setPath(path) {
     checkType(path, 'string', 'ImageKnight.setPath', 'path');
-    this.path = path;
     
-    return new Promise(resolve => this.setSwordState({path}, resolve()));
+    return new Promise(resolve => {
+      this.props.path = path;
+      this.menestrel.update(resolve);
+    });
   }
   
-  setWidth(width, callback) {
+  setWidth(width) {
     checkType(width, 'number', 'ImageKnight.setWidth', 'width');
-    this.width = width;
     
-    return new Promise(resolve => this.setSwordState({width}, resolve()));
+    return new Promise(resolve => {
+      this.props.width = width;
+      this.menestrel.update(resolve);
+    });
   }
   
-  setHeight(height, callback) {
+  setHeight(height) {
     checkType(height, 'number', 'ImageKnight.setHeight', 'height');
-    this.height = height;
     
-    return new Promise(resolve => this.setSwordState({height}, resolve()));
+    return new Promise(resolve => {
+      this.props.height = height;
+      this.menestrel.update(resolve);
+    });
   }
   
-  setSize(width, height, callback) {
+  setSize(width, height) {
     checkType(width, 'number', 'ImageKnight.setSize', 'width');
     checkType(height, 'number', 'ImageKnight.setSize', 'height');
-    this.width = width;
-    this.height = height;
     
-    return new Promise(resolve => this.setSwordState({width, height}, resolve()));
+    return new Promise(resolve => {
+      this.props.width = width;
+      this.props.height = height;
+      this.menestrel.update(resolve);
+    });
   }
 }
 
@@ -267,7 +304,7 @@ export class ShapeKnight extends Knight {
     this.color = color;
     this.width = width;
     this.height = height;
-    this.sword = React.createElement(ShapeSword, {shape, width, height, color});
+    this.Sword = React.createElement(ShapeSword, {shape, width, height, color});
   }
   
   setShape(shape, callback) {

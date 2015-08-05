@@ -13,17 +13,16 @@ export default class Song extends React.Component {
     .filter(knight => knight.mounted)
     .map(knight => {
       
-      const {id, sword, x, y, visible} = knight;
+      const {id, Sword, x, y, visible, props} = knight;
       const spanStyle = {
         position: 'fixed',
         top: y,
         left: x,
         opacity: visible ? 1 : 0,
       };
-      
       return (
         <span key={id} style={spanStyle}>
-          { React.cloneElement(sword, {ref: id}) }
+          { React.createElement(Sword, props) }
         </span>
       );
     }); 

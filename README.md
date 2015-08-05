@@ -11,5 +11,3 @@ npm i
 cd ./example && npm i && cd ..
 npm run example
 ```
-Todo : toute l'API de knight = promises
-

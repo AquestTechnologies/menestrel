@@ -15,6 +15,4 @@ server.route({
   handler: (request, reply) => reply.file('./index.html')
 });
 
-server.start(() => {
-  console.log(`Make it rain! API server started at ${server.info.uri}`);
-});
+server.start(() => console.log(`Make it rain! Server started at ${server.info.uri}`));
