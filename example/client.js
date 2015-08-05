@@ -10,61 +10,100 @@ class Button extends React.Component {
 }
 
 const randomInteger = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
 let stepDown = true;
 
+const knights = {
+  arthur: new TextKnight({
+    text: 'Arthur',
+    x: 0,
+    y: 0,
+  }),
+  lancelot: new TextKnight({
+    text: 'Lancelot',
+    x: 100,
+    y: 100,
+    onShow: () => console.log('lancelot onShow')
+  }),
+  galaad: new TextKnight({
+    text: 'Galaad',
+    x: 200,
+    y: 200,
+    onUnmount: () => console.log('galaad onUnmount')
+  }),
+  perceval: new ImageKnight({
+    path: 'https://matricien.files.wordpress.com/2012/04/perceval-sur-sa-monture.jpg',
+    x: 200,
+    y: 300,
+    width: 200,
+  }),
+  chuck: new Knight({
+    sword: <Button />,
+    x: 200,
+    y: 280,
+  }),
+  bruce: new ShapeKnight({
+    shape: 'rectangle',
+    x: 700,
+    y: 100,
+    width: 100,
+    height: 100,
+    color: '#113F59',
+  }),
+  lee: new ShapeKnight({
+    shape: 'rectangle',
+    x: 810,
+    y: 100,
+    width: 100,
+    height: 100,
+  }),
+};
+
 const tales = {
-  beginning: {
-    content: (knights, next) => {
-      const {arthur, lancelot} = knights;
-      Promise.all([
-        arthur.mount(),
-        lancelot.mount(),
-      ]).then(() => next('second', 1000));
-    }
+  
+  beginning: (knights, next) => {
+    const {arthur, lancelot} = knights;
+    Promise.all([
+      arthur.mount(),
+      lancelot.mount(),
+    ]).then(() => next('second', 1000));
   },
-  first: {
-    content: (knights, next) => {
-      const {perceval, lancelot, chuck} = knights;
-      Promise.all([
-        chuck.mounted ? chuck.toogle() : Promise.resolve(),
-        perceval.unmount(),
-        lancelot.toogle(),
-      ]).then(() => next('second', 1000));
-    }
-    
+  
+  first: (knights, next) => {
+    const {perceval, lancelot, chuck} = knights;
+    Promise.all([
+      chuck.mounted ? chuck.toogle() : Promise.resolve(),
+      perceval.unmount(),
+      lancelot.toogle(),
+    ]).then(() => next('second', 1000));
   },
-  second: {
-    content: (knights, next) => {
-      const {lancelot, galaad, arthur} = knights;
-      Promise.all([
-        galaad.mount(),
-        lancelot.toogle(),
-        arthur.setText(arthur.text + '.')
-          .move(randomInteger(0, 1500), randomInteger(0, 800)),
-      ]).then(() => next('third', 1000));
-    }
+  
+  second: (knights, next) => {
+    const {lancelot, galaad, arthur} = knights;
+    Promise.all([
+      galaad.mount(),
+      lancelot.toogle(),
+      arthur
+        .setText(arthur.text + '.')
+        .move(randomInteger(0, 1500), randomInteger(0, 800)),
+    ]).then(() => next('third', 1000));
   },
-  third: {
-    content: (knights, next) => {
-      const {arthur, galaad, perceval, lancelot} = knights;
-      Promise.all([
-        arthur.toogle(),
-        lancelot.toogle(),
-        galaad.unmount(),
-        perceval.mount(),
-      ]).then(() => next('fourth', 1000));
-    }
+  
+  third: (knights, next) => {
+    const {arthur, galaad, perceval, lancelot} = knights;
+    Promise.all([
+      arthur.toogle(),
+      lancelot.toogle(),
+      galaad.unmount(),
+      perceval.mount(),
+    ]).then(() => next('fourth', 1000));
   },
-  fourth: {
-    content: (knights, next) => {
-      const {chuck} = knights;
-      if (chuck.mounted) {
-        chuck.passNext(next, 'fifth')
-          .show();
-      }
-      else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
+  fourth: (knights, next) => {
+    const {chuck} = knights;
+    if (chuck.mounted) {
+      chuck.passNext(next, 'fifth')
+        .show();
     }
+    else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
   },
   
   // direct reference
@@ -108,63 +147,18 @@ const tales = {
     if (lee.mounted) {
       if (stepDown) {
         if (lee.y > 880) stepDown = false;
-        lee.displace(0, 10).then(() => next('step', 1000));
+        lee.displace(0, 10).then(() => next('step', 100));
       } else {
         if (lee.y < 20) stepDown = true;
-        lee.displace(0, -10).then(() => next('step', 1000));
+        lee.displace(0, -10).then(() => next('step', 100));
       }
     }
-    else lee.mount().then(() => next('step', 1000));
+    else lee.mount().then(() => next('step', 10));
   }
 };
 
-const knights = {
-  arthur: new TextKnight('arthur', {
-    x: 0,
-    y: 0,
-  }),
-  lancelot: new TextKnight('lancelot', {
-    x: 100,
-    y: 100,
-    onShow: () => console.log('lancelot onShow')
-  }),
-  galaad: new TextKnight('galaad', {
-    x: 200,
-    y: 200,
-    onUnmount: () => console.log('galaad onUnmount')
-  }),
-  perceval: new ImageKnight('https://matricien.files.wordpress.com/2012/04/perceval-sur-sa-monture.jpg', {
-    x: 200,
-    y: 300,
-    width: 200,
-  }),
-  chuck: new Knight({
-    sword: <Button />,
-    x: 200,
-    y: 280,
-  }),
-  bruce: new ShapeKnight('rectangle', {
-    x: 700,
-    y: 100,
-    width: 100,
-    height: 100,
-    color: '#113F59',
-  }),
-  lee: new ShapeKnight('rectangle', {
-    x: 810,
-    y: 100,
-    width: 100,
-    height: 100,
-    color: '#113F59',
-    easing: 'linear',
-    transitionTime: 1
-  }),
-};
-
-console.log('tales', tales);
-console.log('knights', knights);
 console.log('starting Menestrel...\n');
 
 const onboarding = new Menestrel(tales, knights)
 .mount(document.getElementById('mountNode'))
-.start(['blink', 'step', 'beginning']);
+.start(['blink', /*'step', */'beginning']);
