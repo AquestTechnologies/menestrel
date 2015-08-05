@@ -82,9 +82,8 @@ const tales = {
     Promise.all([
       galaad.mount(),
       lancelot.toogle(),
-      arthur
-        .setText(arthur.text + '.')
-        .move(randomInteger(0, 1500), randomInteger(0, 800)),
+      arthur.setText(arthur.text + '.'),
+      arthur.move(randomInteger(0, 1000), randomInteger(0, 500)),
     ]).then(() => next('third', 1000));
   },
   
@@ -100,7 +99,8 @@ const tales = {
   fourth: (knights, next) => {
     const {chuck} = knights;
     if (chuck.mounted) {
-      chuck.passNext(next, 'fifth')
+      chuck
+        .passNext(next, 'fifth')
         .show();
     }
     else chuck.mount().then(() => chuck.passNext(next, 'fifth'));
@@ -138,8 +138,8 @@ const tales = {
   blink: (knights, next) => {
     const {bruce} = knights;
     bruce.mounted ?
-      bruce.toogle().then(() => next('blink', 5000)) :
-      bruce.mount().then(() => next('blink', 5000));
+      bruce.toogle().then(() => next('blink', 3000)) :
+      bruce.mount().then(() => next('blink', 3000));
   },
   
   step: (knights, next) => {

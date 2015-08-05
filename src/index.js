@@ -22,6 +22,9 @@ function checkType(arg, correctType, caller, argName) {
 export default class Menestrel {
   
   constructor(tales, knights) {
+    checkType(tales, 'object', 'Menestrel.constructor', 'tales');
+    checkType(knights, 'object', 'Menestrel.constructor', 'knights');
+    
     this.tales = tales;
     this.knights = knights;
   }
@@ -63,7 +66,7 @@ export default class Menestrel {
     const filteredCallback = filterFn(callback);
     this.mountNode = mountNode;
     Object.keys(knights).forEach(key => {
-      if (knights.hasOwnProperty(key)) knights[key].initialize(this, key);
+      if (knights.hasOwnProperty(key)) knights[key]._initialize(this, key);
     });
     this.song = React.render(<Song knights={knights} />, mountNode, filteredCallback);
     return this;
@@ -91,8 +94,12 @@ export class Knight {
     this.onHide      = filterFn(onHide);
     this.onMoveStart = filterFn(onMoveStart);
     this.onMoveEnd   = filterFn(onMoveEnd);
-    this.id = Math.random().toString().slice(2); // random is bad ! needs a mock db
     this.sword = React.isValidElement(sword) ? sword : undefined;
+  }
+  
+  _initialize(menestrel, name) {
+    this.menestrel = menestrel;
+    this.id = name;
   }
   
   mount(x, y) {
@@ -174,14 +181,9 @@ export class Knight {
     return promise;
   }
   
-  initialize(menestrel, name) {
-    this.menestrel = menestrel;
-    this.name = name;
-  }
-  
   setSwordState(newState, callback) {
     const sword = this.menestrel.song.refs[this.id]; // Magic !
-    if (!sword) throwError(`Knight.setSwordState: knight ${this.name} must be mounted`);
+    if (!sword) throwError(`Knight.setSwordState: knight ${this.id} must be mounted`);
     sword.setState(newState, callback);
     return this;
   }
@@ -196,17 +198,18 @@ export class TextKnight extends Knight {
   
   constructor(pledge) {
     super(pledge);
+    
     const {text} = pledge;
     checkType(text, 'string', 'TextKnight.constructor', 'pledge.text');
     this.text = text;
     this.sword = React.createElement(TextSword, {text});
   }
   
-  setText(text, callback) {
+  setText(text) {
     checkType(text, 'string', 'TextKnight.setText', 'text');
     this.text = text;
-    this.setSwordState({text}, callback);
-    return this;
+    
+    return new Promise(resolve => this.setSwordState({text}, resolve()));
   }
 }
 
@@ -214,33 +217,34 @@ export class ImageKnight extends Knight {
   
   constructor(pledge) {
     super(pledge);
+    
     const {width, height, path} = pledge;
     checkType(path, 'string', 'ImageKnight.constructor', 'pledge.path');
+    this.url = path;
     this.width = isNumber(width) ? width : undefined;
     this.height = isNumber(height) ? height : undefined;
-    this.url = path;
     this.sword = React.createElement(ImageSword, {path, width, height});
   }
   
-  setPath(path, callback) {
+  setPath(path) {
     checkType(path, 'string', 'ImageKnight.setPath', 'path');
     this.path = path;
-    this.setSwordState({path}, callback);
-    return this;
+    
+    return new Promise(resolve => this.setSwordState({path}, resolve()));
   }
   
   setWidth(width, callback) {
     checkType(width, 'number', 'ImageKnight.setWidth', 'width');
     this.width = width;
-    this.setSwordState({width}, callback);
-    return this;
+    
+    return new Promise(resolve => this.setSwordState({width}, resolve()));
   }
   
   setHeight(height, callback) {
     checkType(height, 'number', 'ImageKnight.setHeight', 'height');
     this.height = height;
-    this.setSwordState({height}, callback);
-    return this;
+    
+    return new Promise(resolve => this.setSwordState({height}, resolve()));
   }
   
   setSize(width, height, callback) {
@@ -248,8 +252,8 @@ export class ImageKnight extends Knight {
     checkType(height, 'number', 'ImageKnight.setSize', 'height');
     this.width = width;
     this.height = height;
-    this.setSwordState({width, height}, callback);
-    return this;
+    
+    return new Promise(resolve => this.setSwordState({width, height}, resolve()));
   }
 }
 
@@ -257,11 +261,12 @@ export class ShapeKnight extends Knight {
   
   constructor(pledge) {
     super(pledge);
+    
     const {shape, width, height, color} = pledge;
+    this.shape = shape;
+    this.color = color;
     this.width = width;
     this.height = height;
-    this.color = color;
-    this.shape = shape;
     this.sword = React.createElement(ShapeSword, {shape, width, height, color});
   }
   
