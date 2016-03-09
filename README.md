@@ -1,13 +1,6 @@
 # Ménestrel
 *Tell stories like it's 1390*
 
-Ménestrel is a storytelling javascript library.
+!!! This is just an experiment, it is bad code. You've been warned :wink: !!!
 
-download and run example : 
-```
-mkdir menestrel
-git clone https://github.com/AquestTechnologies/menestrel.git ./menestrel
-npm i
-cd ./example && npm i && cd ..
-npm run example
-```
+Ménestrel is a storytelling javascript library. The idea was to define *sequences* that could [mount/unmount/show/hide/move/pass props to/wait for] React components to make onboarding, tutorials, etc...
