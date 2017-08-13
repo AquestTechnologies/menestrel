@@ -2,33 +2,26 @@
   "name": "menestrel",
   "version": "0.1.0",
   "description": "Tell stories like it's 1390",
-  "main": "src/index.js",
-  "scripts": {
-    "start": "npm run example",
-    "example": "cd ./example && npm start && cd ..",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AquestTechnologies/menestrel.git"
-  },
-  "keywords": [
-    "onboarding",
-    "story",
-    "storytelling"
-  ],
-  "author": "Aquest Technologies",
+  "author": "David Hérault <dherault@gmail.com> (https://github.com/dherault)",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/AquestTechnologies/menestrel/issues"
+  "main": "src/menestrel.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
   },
-  "homepage": "https://github.com/AquestTechnologies/menestrel#readme",
   "dependencies": {
-    "react": "0.14.0-beta1",
-    "react-dom": "^0.14.0-beta1"
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "react-scripts": "1.0.10"
   },
   "devDependencies": {
-    "babel": "^5.8.5",
-    "babel-loader": "^5.3.2"
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.4.1",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^5.1.1",
+    "eslint-plugin-react": "^7.2.0"
   }
 }
