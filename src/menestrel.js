@@ -1,33 +1,24 @@
 import React from 'react'
 
 class Casting {
+  // TODO: extend Map ?
   actors = {}
 
   get = actor => {
-    let Actor
-
-    // Id reference
-    if (typeof actor === 'string') Actor = this.actors[actor]
-
-    // Class variable
-    if (typeof actor === 'function' && actor.id) Actor = actor
-
-    if (!Actor) throw new Error(`Actor not found: ${actor}`)
-
-    return Actor
+    if (typeof actor === 'string') return this.actors[actor]
+    if (typeof actor === 'function' && actor.name) return actor
+    
+    throw new Error(`Actor not found: ${actor}`)
   }
 
-  add = ({
-    id = Math.random(),
-    Component = 'div',
+  add = (Component = 'div', {
+    name = Math.random(),
     Wrapper = 'div',
     wrapperProps = {},
     visible = true,
     mounted = true,
     topLevel = false,
-  }) => {
-
-    console.log('Adding actor', id)
+  } = {}) => {
 
     if (!wrapperProps.style) wrapperProps.style = {}
 
@@ -38,7 +29,7 @@ class Casting {
     }
 
     const Actor = p => {
-      // console.log('Actor', id, 'render');
+      // console.log('Actor', name, 'render');
       const { mounted, visible, childProps } = deadState
 
       if (!mounted) return null
@@ -57,8 +48,8 @@ class Casting {
       )
     }
 
-    return this.actors[id] = Object.assign(Actor, {
-      id,
+    return this.actors[name] = Object.assign(Actor, {
+      name,
       topLevel,
       deadState,
     })
@@ -66,6 +57,8 @@ class Casting {
 }
 
 class Shooting extends React.Component {
+
+  queues = new Set()
 
   _ = q => ({
     pause: () => q.push({ type: 'PAUSE' }),
@@ -88,24 +81,23 @@ class Shooting extends React.Component {
 
     runScene: sceneId => q.push({ type: 'SHOOT', sceneId }),
 
-    run: x => this.shoot(x),
-
+    run: this.shoot,
     update: this.update,
     forceUpdate: this.forceUpdate.bind(this),
   })
 
   update = q => !q.paused && new Promise(resolve => this.forceUpdate(resolve))
 
-  shoot = sceneId => {
-    console.log('shoot:', sceneId)
+  shoot = scene => {
+    // console.log('shoot:', scene)
+    const sceneFn = typeof scene === 'function' ? scene : this.props.scenario[scene]
+
+    if (typeof sceneFn !== 'function') throw new Error(`Scene "${scene}" not found in scenario`)
 
     const q = []
-    const sceneFn = typeof sceneId === 'function' ? sceneId : this.props.scenario[sceneId]
 
-    if (typeof sceneFn !== 'function') throw new Error(`Scene "${sceneId}" not found in scenario`)
-
+    this.queues.add(q)
     sceneFn(this._(q))
-
     this.dequeue(q)
   }
 
@@ -113,9 +105,9 @@ class Shooting extends React.Component {
     const { casting } = this.props
     const action = q.shift()
 
-    if (!action) return
+    if (!action) return this.queues.delete(q)
 
-    console.log('dequeue:', action)
+    // console.log('dequeue:', action)
 
     let promise
 
@@ -185,24 +177,26 @@ class Shooting extends React.Component {
 
     if (disabled) return // TODO: stop all and continue with disabled prop
 
-    console.log('Mounted Shooting. Running first scene')
-
+    // console.log('Mounted Shooting. Running first scene')
     this.shoot(firstScene || Object.keys(scenario)[0])
   }
 
   render() {
-    const { casting, style, className } = this.props
-    const children = []
+    const { casting, style, className, children } = this.props
+
+    // TODO: remove topLevel ?
+    const topLevelActors = []
 
     Object.keys(casting.actors).forEach(actorId => {
       const Actor = casting.actors[actorId]
 
-      if (Actor.topLevel) children.push(<Actor key={actorId} />)
+      if (Actor.topLevel) topLevelActors.push(<Actor key={actorId} />)
     })
 
     return (
       <div {...{ className, style }}>
         {children}
+        {topLevelActors}
       </div>
     )
   }
