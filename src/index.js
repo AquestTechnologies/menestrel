@@ -1,85 +1,204 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
-import { Casting, Shooting } from './menestrel'
 
-let t = Date.now()
+class Casting {
+  // TODO: extend Map ?
+  actors = {}
 
-// Casting
+  get = actor => {
+    if (typeof actor === 'string') return this.actors[actor]
+    if (typeof actor === 'function' && actor.id) return actor
 
-const casting = new Casting()
+    throw new Error(`Actor not found: ${actor}`)
+  }
 
-const Title = () => <h1>Aquest Technologies presents</h1>
-const Button = ({ onClick }) => <button onClick={onClick}>Click me!</button>
-const InfoText = () => <div>Some info text</div>
+  add = (Component = 'div', {
+    id = Math.random(),
+    Wrapper = 'div',
+    wrapperProps = {},
+    visible = true,
+    mounted = true,
+    topLevel = false,
+  } = {}) => {
 
-casting.add(Title, {
-  name: 'Aquest Technologies presents',
-  topLevel: true,
-  mounted: false,
-  visible: false,
-})
+    if (!wrapperProps.style) wrapperProps.style = {}
 
-casting.add(Button, {
-  name: 'cool button',
-  topLevel: true,
-  mounted: false,
-})
+    const deadState = {
+      mounted,
+      visible,
+      childProps: {},
+    }
 
-const InfoTextActor = casting.add(InfoText, {
-  name: 'info text',
-  visible: false,
-})
+    const Actor = p => {
+      // console.log('Actor', id, 'render');
+      const { mounted, visible, childProps } = deadState
 
-const Info = () => (
-  <div>
-    Here is some info:
-    <InfoTextActor />
-  </div>
-)
+      if (!mounted) return null
 
-casting.add(Info, {
-  name: 'info',
-  topLevel: true,
-  mounted: false,
-})
+      // keep Wrapper ? or just child ? Maybe option
+      const style = {
+        ...wrapperProps.style,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity .5s linear', // TODO: transition settings
+      }
 
-// Scenario
+      return React.createElement(
+        Wrapper,
+        { ...wrapperProps, style },
+        React.createElement(Component, { ...p, ...childProps })
+      )
+    }
 
-const scenario = {
-  'first scene': _ => {
-    _.mount('Aquest Technologies presents')
-    _.wait(0) // TODO: delay after first action/rerender
-    _.show('Aquest Technologies presents')
-    _.wait(2000)
-    _.hide('Aquest Technologies presents')
-    _.wait(1000)
-    _.unmount('Aquest Technologies presents')
-    _.runScene('second scene')
-  },
-  'second scene': _ => {
-    _.mount('info')
-    _.wait(1000)
-    _.show('info text')
-    _.wait(2000)
-    _.pause()
-    _.unmount('info') // TODO: add reset method
-    _.hide('info text')
-    _.mount('cool button', {
-      onClick: () => _.run(_ => {
-        _.unmount('cool button')
-        _.runScene('first scene')
-      }),
+    return this.actors[id] = Object.assign(Actor, {
+      id,
+      topLevel,
+      deadState,
     })
-    _.resume()
-  },
+  }
 }
 
-console.log(`Scenario created. ${Date.now() - t}`)
+class Shooting extends React.Component {
 
-t = Date.now()
+  queues = new Set()
 
-ReactDOM.render(
-  <Shooting scenario={scenario} casting={casting} />,
-  document.getElementById('root'),
-  () => console.log(`App rendered. ${Date.now() - t}`)
-)
+  _ = q => ({
+    pause: () => q.push({ type: 'PAUSE' }),
+
+    resume: () => q.push({ type: 'RESUME' }),
+
+    wait: duration => q.push({ type: 'WAIT', duration }),
+
+    updateProps: (actor, props) => q.push({ type: 'UPDATE_PROPS', actor, props }),
+
+    mount: (actor, props) => q.push({ type: 'MOUNT', actor, props }),
+
+    unmount: actor => q.push({ type: 'UNMOUNT', actor }),
+
+    show: actor => q.push({ type: 'SHOW', actor }),
+
+    hide: actor => q.push({ type: 'HIDE', actor }),
+
+    toggle: actor => q.push({ type: 'TOGGLE', actor }),
+
+    runScene: sceneId => q.push({ type: 'SHOOT', sceneId }),
+
+    run: this.shoot,
+    update: this.update,
+    forceUpdate: this.forceUpdate.bind(this),
+  })
+
+  update = q => !q.paused && new Promise(resolve => this.forceUpdate(resolve))
+
+  shoot = scene => {
+    // console.log('shoot:', scene)
+    const sceneFn = typeof scene === 'function' ? scene : this.props.scenario[scene]
+
+    if (typeof sceneFn !== 'function') throw new Error(`Scene "${scene}" not found in scenario`)
+
+    const q = []
+
+    this.queues.add(q)
+    sceneFn(this._(q))
+    this.dequeue(q)
+  }
+
+  dequeue = q => {
+    const { casting } = this.props
+    const action = q.shift()
+
+    if (!action) return this.queues.delete(q)
+
+    // console.log('dequeue:', action)
+
+    let promise
+
+    switch (action.type) {
+      case 'SHOOT':
+        this.shoot(action.sceneId)
+        break
+
+      case 'PAUSE':
+        q.paused = true
+        break
+
+      case 'RESUME':
+        q.paused = false
+        promise = this.update(q)
+        break
+
+      case 'WAIT':
+        promise = new Promise(resolve => setTimeout(resolve, action.duration))
+        break
+
+      case 'UPDATE_PROPS':
+        Object.assign(casting.get(action.actor).deadState.childProps, action.props)
+        promise = this.update(q)
+        break
+
+      case 'MOUNT': {
+        const { deadState } = casting.get(action.actor)
+
+        deadState.mounted = true
+
+        if (action.props) Object.assign(deadState.childProps, action.props)
+
+        promise = this.update(q)
+        break
+      }
+
+      case 'UNMOUNT':
+        casting.get(action.actor).deadState.mounted = false
+        promise = this.update(q)
+        break
+
+      case 'SHOW':
+        casting.get(action.actor).deadState.visible = true
+        promise = this.update(q)
+        break
+
+      case 'HIDE':
+        casting.get(action.actor).deadState.visible = false
+        promise = this.update(q)
+        break
+
+      case 'TOGGLE': {
+        const { deadState } = casting.get(action.actor)
+
+        deadState.visible = !deadState.visible
+        promise = this.update(q)
+        break
+      }
+    }
+
+    return promise ? promise.then(() => this.dequeue(q)) : this.dequeue(q)
+  }
+
+  componentDidMount() {
+    const { disabled, firstScene, scenario } = this.props
+
+    if (disabled) return // TODO: stop all and continue with disabled prop
+
+    // console.log('Mounted Shooting. Running first scene')
+    this.shoot(firstScene || Object.keys(scenario)[0])
+  }
+
+  render() {
+    const { casting, style, className, children } = this.props
+
+    // TODO: remove topLevel ?
+    const topLevelActors = React.Children.toArray(children)
+
+    Object.keys(casting.actors).forEach(key => {
+      const Actor = casting.actors[key]
+
+      if (Actor.topLevel) topLevelActors.push(React.createElement(Actor, { key }))
+    })
+
+    return React.createElement(
+      'div',
+      { className, style },
+      topLevelActors
+    )
+  }
+}
+
+export { Casting, Shooting }

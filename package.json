@@ -4,24 +4,30 @@
   "description": "Tell stories like it's 1390",
   "author": "David Hérault <dherault@gmail.com> (https://github.com/dherault)",
   "license": "MIT",
-  "main": "src/menestrel.js",
+  "main": "dist/bundle.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "python -m SimpleHTTPServer",
+    "build": "npm run build-js && npm run build-example",
+    "build-js": "./node_modules/.bin/babel src/index.js --out-file lib/index.js",
+    "build-example": "(cd example && npm run build)"
   },
-  "dependencies": {
-    "react": "^15.6.1",
-    "react-dom": "^15.6.1",
-    "react-scripts": "1.0.10"
+  "peerDependencies": {
+    "react": "^15.6.1"
   },
   "devDependencies": {
+    "react": "^15.6.1",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
     "babel-eslint": "^7.2.3",
+    "babel-loader": "^7.1.1",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
     "eslint": "^4.4.1",
     "eslint-config-airbnb": "^15.1.0",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-react": "^7.2.0"
+    "eslint-plugin-react": "^7.2.0",
+    "webpack": "^3.5.5"
   }
 }
